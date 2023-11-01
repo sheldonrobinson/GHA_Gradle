@@ -1,0 +1,13 @@
+# Action: Marketplace/Setup Java JDK
+name: Setup Java JDK
+  uses: actions/setup-java@v3.13.0
+  with:
+    java-version: '17'
+    distribution: 'temurin' 
+    java-package: 'jdk'
+    architecture: 'x64'
+    check-latest: true
+    cache: 'gradle'
+
+
+
