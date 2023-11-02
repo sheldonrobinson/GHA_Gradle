@@ -1,5 +1,6 @@
 name: Run Gradle on PRs
-on: pull_request
+on: [pull_request, push]
+
 jobs:
   gradle:
     runs-on: ubuntu-latest
@@ -9,30 +10,36 @@ jobs:
       uses: actions/setup-java@v3
       id: setup-java
       with:
-        distribution: 'temurin'
-        java-version: '11'
-        java-package: 'jdk'
-        architecture: 'x64'
+        distribution: temurin
+        java-version: 17
+        java-package: jdk
+        architecture: x64
         check-latest: true
-
+    - name: Add native gradle wrapper # GHA using symlinks causes CNFE issues
+      run: gradle wrapper
+    - name: Update Gradle Wrapper
+      uses: gradle-update/update-gradle-wrapper-action@v1
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2
       id: setup-gradle
       with: 
         gradle-version: wrapper
+        dependency-graph: generate-and-submit
         cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
         gradle-home-cache-cleanup: true
-        
+    - name: Run chmod to make gradlew executable
+      run: chmod ugo+x ./gradlew
+    - name: Validate gradle wrapper
+      uses: gradle/wrapper-validation-action@v1
+    - name: Run all checks, disabling dependency graph generation
+      run: ./gradlew check
+      env:
+        GITHUB_DEPENDENCY_GRAPH_ENABLED: false
     - name: Test build configuration
-      run: gradle build --dry-run # just test build configuration
-
-    - name: Gradle and Java version
-      run: echo " Gradle version was ${{ steps.setup-gradle.outputs.gradle-version }}\n Java version was ${{ steps.setup-java.outputs.java-version }}""
-    
+      run:  ./gradlew build --dry-run --warning-mode none # just test build configuration   
     - name: Execute Gradle build
       id: gradle
-      run: ./gradlew build --scan
-      
+      run: echo "yes" | ./gradlew build --scan --warning-mode none      
     - name: "Add Build Scan URL as PR comment"
       uses: actions/github-script@v5
       if: github.event_name == 'pull_request' && failure()
@@ -44,17 +51,11 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             body: '❌ ${{ github.workflow }} failed: ${{ steps.gradle.outputs.build-scan-url }}'
-          })
-          
+          })         
     - name: Upload build reports
       uses: actions/upload-artifact@v3
       with:
         name: build-reports
         path: build/reports/
-
-
-
-    
-
 
 
