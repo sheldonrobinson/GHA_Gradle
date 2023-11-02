@@ -10,7 +10,7 @@ jobs:
       id: setup-java
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '11'
         java-package: 'jdk'
         architecture: 'x64'
         check-latest: true
