@@ -14,13 +14,12 @@ jobs:
         java-package: 'jdk'
         architecture: 'x64'
         check-latest: true
-        cache: 'gradle'
 
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2
       id: setup-gradle
       with: 
-        gradle-version: 8.4
+        gradle-version: wrapper
         cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
         gradle-home-cache-cleanup: true
         
